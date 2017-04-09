@@ -5,17 +5,22 @@ using Prime31.ZestKit; //ZestKit
 [RequireComponent(typeof (CharacterController2D))]
 public class PlayerController : BouncyCharacter 
 {
+    //movement
     public float moveSpeed = 8.0f;
+    public float airMoveSpeed = 8.0f;
     public float gravity = 15.0f;
     public float targetJumpHeight = 2.0f;
-
+    //jumping
     public bool canDoubleJump = false;
     protected bool doubleJumpUsed;
-
+    protected bool jumpReleased;
+    protected bool jumpHeldLastFrame;
+    protected bool holdJump;
+    public bool canHoldJump;
+    //refs
     protected CharacterController2D controller;
     protected SpriteRenderer spriteRenderer;
     protected Vector2 velocity;
-
     protected Transform _spriteTransform;
 
     public override void Awake()
@@ -34,11 +39,13 @@ public class PlayerController : BouncyCharacter
     {
         if (!paused)
         {
+            holdJump = false;
 
             if (controller.isGrounded)
-            {
+            { 
                 velocity.y = 0.0f;
                 doubleJumpUsed = false;
+                jumpHeldLastFrame = false;
                 if(controller.becameGroundedThisFrame)
                 {
                     // Debug.Log("Was not grounded last frame");
@@ -55,12 +62,14 @@ public class PlayerController : BouncyCharacter
 
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
             {
-                velocity.x = -moveSpeed;
+                if(controller.isGrounded) velocity.x = -moveSpeed;
+                else velocity.x = -airMoveSpeed;
                 spriteRenderer.flipX = true;
             }
             else if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
             {
-                velocity.x = moveSpeed;
+                if(controller.isGrounded) velocity.x = moveSpeed;
+                else velocity.x = airMoveSpeed;
                 spriteRenderer.flipX = false;
             }
             else
@@ -77,6 +86,7 @@ public class PlayerController : BouncyCharacter
                     velocity.y = Mathf.Sqrt(2f * targetJumpHeight * gravity);
                     _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
                     _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
+                    jumpReleased = false;
                 }
                 else if (canDoubleJump && !doubleJumpUsed)
                 {
@@ -85,6 +95,19 @@ public class PlayerController : BouncyCharacter
                     _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
                     _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
                 }
+            }
+            else if(canHoldJump && !controller.isGrounded && !jumpReleased && !jumpHeldLastFrame && Input.GetKey(KeyCode.Space) && (velocity.y >= -0.05 && velocity.y <= 0.05))
+            {
+                Debug.Log("Holding jump!");
+                holdJump = true;
+                jumpHeldLastFrame = true;  
+            }
+            if(Input.GetKeyUp(KeyCode.Space) && !jumpReleased && velocity.y > 0)
+            {
+                Debug.Log("Short hop!");
+                jumpReleased = true;
+                //cut vertical speed
+                velocity.y *= 0.5f;
             }
 
             if (Mathf.Abs(velocity.x) > 0 && controller.isGrounded)
@@ -97,6 +120,7 @@ public class PlayerController : BouncyCharacter
             }
 
             velocity.y -= gravity * Time.deltaTime;
+            if(holdJump) velocity.y = 0;
 
             controller.move(velocity * Time.deltaTime);
             //set new local velocity
