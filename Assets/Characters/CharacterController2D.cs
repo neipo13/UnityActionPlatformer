@@ -11,7 +11,7 @@ public class CharacterController2D : MonoBehaviour
 {
 	#region internal types
 
-	struct CharacterRaycastOrigins
+	public struct CharacterRaycastOrigins
 	{
 		public Vector3 topLeft;
 		public Vector3 bottomRight;
@@ -99,8 +99,7 @@ public class CharacterController2D : MonoBehaviour
 	/// mask with all layers that should act as one-way platforms. Note that one-way platforms should always be EdgeCollider2Ds. This is because it does not support being
 	/// updated anytime outside of the inspector for now.
 	/// </summary>
-	[SerializeField]
-	LayerMask oneWayPlatformMask = 0;
+	public LayerMask oneWayPlatformMask = 0;
 
 	/// <summary>
 	/// the max slope angle that the CC2D can climb
@@ -158,6 +157,7 @@ public class CharacterController2D : MonoBehaviour
 	/// holder for our raycast origin corners (TR, TL, BR, BL)
 	/// </summary>
 	CharacterRaycastOrigins _raycastOrigins;
+	public CharacterRaycastOrigins RaycastOrigins { get { return _raycastOrigins;}}
 
 	/// <summary>
 	/// stores our raycast hit during movement
@@ -173,6 +173,7 @@ public class CharacterController2D : MonoBehaviour
 	// horizontal/vertical movement data
 	float _verticalDistanceBetweenRays;
 	float _horizontalDistanceBetweenRays;
+	public float HorizontalDistanceBetweenRays {get {return _horizontalDistanceBetweenRays;}}
 
 	// we use this flag to mark the case where we are travelling up a slope and we modified our delta.y to allow the climb to occur.
 	// the reason is so that if we reach the end of the slope we can make an adjustment to stay grounded
@@ -228,7 +229,7 @@ public class CharacterController2D : MonoBehaviour
 
 
 	[System.Diagnostics.Conditional( "DEBUG_CC2D_RAYS" )]
-	void DrawRay( Vector3 start, Vector3 dir, Color color )
+	public void DrawRay( Vector3 start, Vector3 dir, Color color )
 	{
 		Debug.DrawRay( start, dir, color );
 	}
@@ -465,6 +466,27 @@ public class CharacterController2D : MonoBehaviour
 		}
 
 		return true;
+	}
+
+	public bool CheckCollision(Vector2 initialRayOrigin, Vector3 rayDirection, float rayDistance)
+	{
+		var isGoingUp = velocity.y > 0;
+		
+		for( var i = 0; i < totalVerticalRays; i++ )
+		{
+			var mask = platformMask;
+			if( ( !collisionState.wasGroundedLastFrame ) || ignoreOneWayPlatformsThisFrame )
+				mask &= ~oneWayPlatformMask;
+			var ray = new Vector2( initialRayOrigin.x + i * HorizontalDistanceBetweenRays, initialRayOrigin.y );
+
+			DrawRay( ray, rayDirection * rayDistance, Color.green );
+			var _raycastHit = Physics2D.Raycast( ray, rayDirection, rayDistance, mask );
+			if( _raycastHit )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 

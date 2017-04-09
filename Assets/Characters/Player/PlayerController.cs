@@ -12,12 +12,14 @@ public class PlayerController : BouncyCharacter
     public float gravity = 15.0f;
     public float targetJumpHeight = 2.0f;
     //jumping
+    private bool canJumpThisFrame;
     public bool canDoubleJump = false;
     protected bool doubleJumpUsed;
     protected bool jumpReleased;
     protected bool jumpHeldLastFrame;
     protected bool holdJump;
     public bool canHoldJump;
+    // public int jumpInputFrameBuffer = 6;
     //refs
     protected CharacterController2D controller;
     protected SpriteRenderer spriteRenderer;
@@ -42,11 +44,13 @@ public class PlayerController : BouncyCharacter
         {
             holdJump = false;
             deltaX = 0f;
+            canJumpThisFrame = false;
             if (controller.isGrounded)
             { 
                 velocity.y = 0.0f;
                 doubleJumpUsed = false;
                 jumpHeldLastFrame = false;
+                canJumpThisFrame = true;
                 if(controller.becameGroundedThisFrame)
                 {
                     // Debug.Log("Was not grounded last frame");
@@ -55,10 +59,17 @@ public class PlayerController : BouncyCharacter
                     _spriteTransform.ZKlocalScaleTo(startingScale, 0.2f).setCompletionHandler(ResetAnchor).start();
 
                 }
-            }
-            // else
+            } 
+            // else if(velocity.y <= 0)
             // {
-            //     Debug.Log("Not Grounded");
+            //     //check if we can jump within our jumpInputFrameBuffer scale at current velocity
+            //     var rayDistance = jumpInputFrameBuffer * -velocity.y * Time.deltaTime; //velocity will be negative because of if statement
+            //     var initialRayOrigin = Vector3.zero;
+            //     if(controller != null)
+		    //         initialRayOrigin = controller.RaycastOrigins.bottomLeft;
+		    //     var rayDirection = -Vector2.up;
+            //     canJumpThisFrame = controller.CheckCollision(initialRayOrigin, rayDirection, rayDistance);
+            //     if(canJumpThisFrame ) Debug.Log("Jump input buffer available!");
             // }
 
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
@@ -80,7 +91,7 @@ public class PlayerController : BouncyCharacter
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 
-                if (controller.isGrounded)
+                if (canJumpThisFrame)
                 {
                     velocity.y = Mathf.Sqrt(2f * targetJumpHeight * gravity);
                     _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
