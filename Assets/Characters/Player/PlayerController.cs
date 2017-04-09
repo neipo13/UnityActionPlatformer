@@ -12,7 +12,9 @@ public class PlayerController : BouncyCharacter
     public float gravity = 15.0f;
     public float targetJumpHeight = 2.0f;
     //jumping
-    private bool canJumpThisFrame;
+    private bool canJumpThisFrame; // for jumping a frame or two after walking off the edge
+    public int walkOffCliffJumpFrameBuffer = 2;
+    private int framesSinceGrounded;
     public bool canDoubleJump = false;
     protected bool doubleJumpUsed;
     protected bool jumpReleased;
@@ -49,6 +51,7 @@ public class PlayerController : BouncyCharacter
             if (controller.isGrounded)
             { 
                 velocity.y = 0.0f;
+                framesSinceGrounded = 0;
                 doubleJumpUsed = false;
                 jumpHeldLastFrame = false;
                 canJumpThisFrame = true;
@@ -60,6 +63,15 @@ public class PlayerController : BouncyCharacter
                     _spriteTransform.ZKlocalScaleTo(startingScale, 0.2f).setCompletionHandler(ResetAnchor).start();
 
                 }
+            }
+            else if(velocity.y < 0f && framesSinceGrounded <= walkOffCliffJumpFrameBuffer)
+            {
+                 framesSinceGrounded++;
+                 canJumpThisFrame = true;
+            }
+            else
+            {
+                canJumpThisFrame = false;
             }
 
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
@@ -89,7 +101,7 @@ public class PlayerController : BouncyCharacter
             }
             else if (Input.GetKeyDown(KeyCode.Space))
             {
-                if (controller.isGrounded)
+                if (controller.isGrounded || canJumpThisFrame)
                 {
                     Jump();
                 }
@@ -103,14 +115,14 @@ public class PlayerController : BouncyCharacter
                     Jump(isDoubleJump:true);
                 }
             }
-            else if(canHoldJump && !controller.isGrounded && !jumpReleased && !jumpHeldLastFrame && Input.GetKey(KeyCode.Space) && (velocity.y >= -0.1 && velocity.y <= 0.1))
+            else if(canHoldJump && !controller.isGrounded && !jumpReleased && !jumpHeldLastFrame && Input.GetKey(KeyCode.Space) && (velocity.y >= -0.1f && velocity.y <= 0.1f))
             {
                 Debug.Log("Holding jump!");
                 holdJump = true;
                 jumpHeldLastFrame = true;  
             }
 
-            if(Input.GetKeyUp(KeyCode.Space) && !jumpReleased && velocity.y > 0)
+            if(Input.GetKeyUp(KeyCode.Space) && !jumpReleased && velocity.y > 0f)
             {
                 Debug.Log("Short hop!");
                 jumpReleased = true;
@@ -118,7 +130,7 @@ public class PlayerController : BouncyCharacter
                 velocity.y *= 0.5f;
             }
 
-            if (Mathf.Abs(velocity.x) > 0 && controller.isGrounded)
+            if (Mathf.Abs(velocity.x) > 0f && controller.isGrounded)
             {
                 _animator.SetBool("walking", true);
             }
@@ -128,7 +140,7 @@ public class PlayerController : BouncyCharacter
             }
 
             velocity.y -= gravity * Time.deltaTime;
-            if(holdJump) velocity.y = 0;
+            if(holdJump) velocity.y = 0f;
 
             controller.move(velocity * Time.deltaTime);
             //set new local velocity
