@@ -8,6 +8,7 @@ public class PlayerController : BouncyCharacter
     //movement
     public float moveSpeed = 8.0f;
     public float airMoveSpeed = 8.0f;
+    private float deltaX = 0.0f; // holds the change in motion so that we handle no keys pushed && both keys pushed well
     public float gravity = 15.0f;
     public float targetJumpHeight = 2.0f;
     //jumping
@@ -40,7 +41,7 @@ public class PlayerController : BouncyCharacter
         if (!paused)
         {
             holdJump = false;
-
+            deltaX = 0f;
             if (controller.isGrounded)
             { 
                 velocity.y = 0.0f;
@@ -62,20 +63,18 @@ public class PlayerController : BouncyCharacter
 
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
             {
-                if(controller.isGrounded) velocity.x = -moveSpeed;
-                else velocity.x = -airMoveSpeed;
+                if(controller.isGrounded) deltaX -= moveSpeed;
+                else deltaX -= airMoveSpeed;
                 spriteRenderer.flipX = true;
             }
-            else if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
+            if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
             {
-                if(controller.isGrounded) velocity.x = moveSpeed;
-                else velocity.x = airMoveSpeed;
+                if(controller.isGrounded) deltaX += moveSpeed;
+                else deltaX += airMoveSpeed;
                 spriteRenderer.flipX = false;
             }
-            else
-            {
-                velocity.x = 0;
-            }
+            velocity.x = deltaX;
+
 
             //jump
             if (Input.GetKeyDown(KeyCode.Space))
