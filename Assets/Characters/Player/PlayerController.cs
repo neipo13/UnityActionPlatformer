@@ -19,7 +19,8 @@ public class PlayerController : BouncyCharacter
     protected bool jumpHeldLastFrame;
     protected bool holdJump;
     public bool canHoldJump;
-    // public int jumpInputFrameBuffer = 6;
+    public int jumpInputFrameBuffer = 6;
+    private int jumpInputFrameBufferTimer;
     //refs
     protected CharacterController2D controller;
     protected SpriteRenderer spriteRenderer;
@@ -59,18 +60,7 @@ public class PlayerController : BouncyCharacter
                     _spriteTransform.ZKlocalScaleTo(startingScale, 0.2f).setCompletionHandler(ResetAnchor).start();
 
                 }
-            } 
-            // else if(velocity.y <= 0)
-            // {
-            //     //check if we can jump within our jumpInputFrameBuffer scale at current velocity
-            //     var rayDistance = jumpInputFrameBuffer * -velocity.y * Time.deltaTime; //velocity will be negative because of if statement
-            //     var initialRayOrigin = Vector3.zero;
-            //     if(controller != null)
-		    //         initialRayOrigin = controller.RaycastOrigins.bottomLeft;
-		    //     var rayDirection = -Vector2.up;
-            //     canJumpThisFrame = controller.CheckCollision(initialRayOrigin, rayDirection, rayDistance);
-            //     if(canJumpThisFrame ) Debug.Log("Jump input buffer available!");
-            // }
+            }
 
             if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
             {
@@ -88,30 +78,38 @@ public class PlayerController : BouncyCharacter
 
 
             //jump
-            if (Input.GetKeyDown(KeyCode.Space))
+            if(jumpInputFrameBufferTimer > 0)
             {
-                
-                if (canJumpThisFrame)
+                jumpInputFrameBufferTimer--;
+                if(controller.isGrounded)
                 {
-                    velocity.y = Mathf.Sqrt(2f * targetJumpHeight * gravity);
-                    _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
-                    _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
-                    jumpReleased = false;
-                }
-                else if (canDoubleJump && !doubleJumpUsed)
-                {
-                    doubleJumpUsed = true;
-                    velocity.y = Mathf.Sqrt(1.5f * targetJumpHeight * gravity);
-                    _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
-                    _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
+                    Debug.Log("jumped from queue");
+                    Jump();
                 }
             }
-            else if(canHoldJump && !controller.isGrounded && !jumpReleased && !jumpHeldLastFrame && Input.GetKey(KeyCode.Space) && (velocity.y >= -0.05 && velocity.y <= 0.05))
+            else if (Input.GetKeyDown(KeyCode.Space))
+            {
+                if (controller.isGrounded)
+                {
+                    Jump();
+                }
+                else if(!canDoubleJump || doubleJumpUsed)
+                {
+                    jumpInputFrameBufferTimer = jumpInputFrameBuffer;
+                }
+                else //double jump
+                {
+                    doubleJumpUsed = true;
+                    Jump(isDoubleJump:true);
+                }
+            }
+            else if(canHoldJump && !controller.isGrounded && !jumpReleased && !jumpHeldLastFrame && Input.GetKey(KeyCode.Space) && (velocity.y >= -0.1 && velocity.y <= 0.1))
             {
                 Debug.Log("Holding jump!");
                 holdJump = true;
                 jumpHeldLastFrame = true;  
             }
+
             if(Input.GetKeyUp(KeyCode.Space) && !jumpReleased && velocity.y > 0)
             {
                 Debug.Log("Short hop!");
@@ -136,6 +134,14 @@ public class PlayerController : BouncyCharacter
             //set new local velocity
             velocity = controller.velocity;
         }
+    }
+
+    protected void Jump(bool isDoubleJump = false)
+    {
+        velocity.y = Mathf.Sqrt(2f * targetJumpHeight * gravity);
+        _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
+        _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
+        jumpReleased = false;
     }
 
     void ResetAnchor(ITween<Vector3> garbage)
