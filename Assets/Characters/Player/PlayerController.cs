@@ -58,10 +58,7 @@ public class PlayerController : BouncyCharacter
                 if(controller.becameGroundedThisFrame)
                 {
                     // Debug.Log("Was not grounded last frame");
-                    //bounce
-                    _spriteTransform.localScale = new Vector3(startingScale.x * 1.15f, startingScale.y * .85f, startingScale.z);
-                    _spriteTransform.ZKlocalScaleTo(startingScale, 0.2f).setCompletionHandler(ResetAnchor).start();
-
+                    LocalScaleTween(modifierX:1.15f, modifierY:0.85f, length:0.2f).setCompletionHandler(ResetAnchor).start();
                 }
             }
             else if(velocity.y < 0f && framesSinceGrounded <= walkOffCliffJumpFrameBuffer)
@@ -130,14 +127,7 @@ public class PlayerController : BouncyCharacter
                 velocity.y *= 0.5f;
             }
 
-            if (Mathf.Abs(velocity.x) > 0f && controller.isGrounded)
-            {
-                _animator.SetBool("walking", true);
-            }
-            else
-            {
-                _animator.SetBool("walking", false);
-            }
+            SetAnimStates();
 
             velocity.y -= gravity * Time.deltaTime;
             if(holdJump) velocity.y = 0f;
@@ -151,9 +141,25 @@ public class PlayerController : BouncyCharacter
     protected void Jump(bool isDoubleJump = false)
     {
         velocity.y = Mathf.Sqrt(2f * targetJumpHeight * gravity);
-        _spriteTransform.localScale = new Vector3(startingScale.x * 0.75f, startingScale.y * 1.25f, startingScale.z);
-        _spriteTransform.ZKlocalScaleTo(startingScale, 0.3f).start();
+        LocalScaleTween(modifierX:0.75f, modifierY:1.25f, length:0.3f).start();
         jumpReleased = false;
+    }
+    protected ITween<Vector3> LocalScaleTween(float modifierX, float modifierY, float length)
+    {
+        _spriteTransform.localScale = new Vector3(startingScale.x * modifierX, startingScale.y * modifierY, startingScale.z);
+        return _spriteTransform.ZKlocalScaleTo(startingScale, length);
+    }
+
+    private void SetAnimStates()
+    {
+        if (Mathf.Abs(velocity.x) > 0f && controller.isGrounded)
+        {
+            _animator.SetBool("walking", true);
+        }
+        else
+        {
+            _animator.SetBool("walking", false);
+        }
     }
 
     void ResetAnchor(ITween<Vector3> garbage)

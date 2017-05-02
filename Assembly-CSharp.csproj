@@ -54,6 +54,7 @@
      <Compile Include="Assets\Characters\BouncyCharacter.cs" />
      <Compile Include="Assets\Characters\CharacterController2D.cs" />
      <Compile Include="Assets\Characters\Player\PlayerController.cs" />
+     <Compile Include="Assets\Projectiles\IProjectile.cs" />
      <Compile Include="Assets\Tiled2Unity\Scripts\Runtime\CircleObject.cs" />
      <Compile Include="Assets\Tiled2Unity\Scripts\Runtime\GroupLayer.cs" />
      <Compile Include="Assets\Tiled2Unity\Scripts\Runtime\ImportBehaviour.cs" />
@@ -75,6 +76,7 @@
      <Compile Include="Assets\Utility\PausableMonoBehavior.cs" />
      <Compile Include="Assets\Utility\SkewOnCollision.cs" />
      <Compile Include="Assets\Utility\StateKitLite.cs" />
+     <Compile Include="Assets\Weapons\IWeapon.cs" />
      <Compile Include="Assets\ZestKit\Collections\TweenChain.cs" />
      <Compile Include="Assets\ZestKit\Collections\TweenParty.cs" />
      <Compile Include="Assets\ZestKit\Easing\EaseType.cs" />
